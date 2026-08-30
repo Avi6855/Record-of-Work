@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, selectinload
 from typing import Optional
@@ -47,6 +47,58 @@ def att_to_response(a: Attendance) -> AttendanceResponse:
         worker=worker_resp, project=project_resp,
         createdAt=a.created_at, updatedAt=a.updated_at,
     )
+
+
+@router.get("/daily", response_model=list[AttendanceResponse])
+def daily_attendance(
+    projectId: int = Query(...),
+    date: date = Query(..., alias="date"),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    q = db.query(Attendance).filter(
+        Attendance.organization_id == user.organization_id,
+        Attendance.project_id == projectId,
+        Attendance.attendance_date == date,
+    )
+    records = q.options(
+        selectinload(Attendance.worker),
+        selectinload(Attendance.project),
+    ).all()
+    return [att_to_response(a) for a in records]
+
+
+@router.post("/all-present")
+def mark_all_present(
+    projectId: int = Query(...),
+    date: date = Query(..., alias="date"),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    workers = db.query(Worker).filter(
+        Worker.is_deleted == False, Worker.is_active == True,
+        Worker.organization_id == user.organization_id,
+    ).all()
+    created = 0
+    for w in workers:
+        existing = db.query(Attendance).filter(
+            Attendance.worker_id == w.id,
+            Attendance.project_id == projectId,
+            Attendance.attendance_date == date,
+        ).first()
+        if existing:
+            existing.status = "PRESENT"
+        else:
+            att = Attendance(
+                organization_id=user.organization_id,
+                worker_id=w.id, project_id=projectId,
+                attendance_date=date, status="PRESENT",
+                entry_source="BULK", marked_by=user.id,
+            )
+            db.add(att)
+            created += 1
+    db.commit()
+    return {"message": "All present", "created": created}
 
 
 @router.get("", response_model=list[AttendanceResponse])

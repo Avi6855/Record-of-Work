@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Notification
-from schemas import NotificationResponse
+from schemas import NotificationResponse, PageResponse
 from deps import get_current_user
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -19,7 +19,7 @@ def notif_to_response(n: Notification) -> NotificationResponse:
     )
 
 
-@router.get("", response_model=list[NotificationResponse])
+@router.get("", response_model=PageResponse)
 def list_notifications(
     isRead: bool = None,
     page: int = Query(0, ge=0),
@@ -30,8 +30,15 @@ def list_notifications(
     q = db.query(Notification).filter(Notification.user_id == user.id)
     if isRead is not None:
         q = q.filter(Notification.is_read == isRead)
+    total = q.count()
     notifications = q.order_by(Notification.created_at.desc()).offset(page * size).limit(size).all()
-    return [notif_to_response(n) for n in notifications]
+    items = [notif_to_response(n) for n in notifications]
+    total_pages = (total + size - 1) // size if total > 0 else 0
+    return PageResponse(
+        content=items, totalElements=total, totalPages=total_pages,
+        size=size, number=page, first=page == 0, last=page >= total_pages - 1,
+        empty=len(items) == 0,
+    )
 
 
 @router.get("/unread-count")
@@ -40,7 +47,7 @@ def unread_count(db: Session = Depends(get_db), user=Depends(get_current_user)):
     count = db.query(func.count(Notification.id)).filter(
         Notification.user_id == user.id, Notification.is_read == False
     ).scalar()
-    return {"count": count}
+    return count
 
 
 @router.post("/{notif_id}/read")

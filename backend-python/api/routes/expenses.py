@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, selectinload
 from typing import Optional
 from database import get_db
 from models import Expense
-from schemas import ExpenseCreate, ExpenseUpdate, ExpenseResponse
+from schemas import ExpenseCreate, ExpenseUpdate, ExpenseResponse, PageResponse
 from deps import get_current_user
 
 router = APIRouter(prefix="/expenses", tags=["expenses"])
@@ -22,7 +22,7 @@ def exp_to_response(e: Expense) -> ExpenseResponse:
     )
 
 
-@router.get("", response_model=list[ExpenseResponse])
+@router.get("", response_model=PageResponse)
 def list_expenses(
     projectId: Optional[int] = None,
     category: Optional[str] = None,
@@ -36,8 +36,15 @@ def list_expenses(
         q = q.filter(Expense.project_id == projectId)
     if category:
         q = q.filter(Expense.category == category)
+    total = q.count()
     expenses = q.order_by(Expense.expense_date.desc()).offset(page * size).limit(size).all()
-    return [exp_to_response(e) for e in expenses]
+    items = [exp_to_response(e) for e in expenses]
+    total_pages = (total + size - 1) // size if total > 0 else 0
+    return PageResponse(
+        content=items, totalElements=total, totalPages=total_pages,
+        size=size, number=page, first=page == 0, last=page >= total_pages - 1,
+        empty=len(items) == 0,
+    )
 
 
 @router.get("/{expense_id}", response_model=ExpenseResponse)

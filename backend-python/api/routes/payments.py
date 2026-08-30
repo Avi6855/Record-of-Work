@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, selectinload
 from typing import Optional
 from database import get_db
 from models import Payment, Worker, Project
-from schemas import PaymentCreate, PaymentUpdate, PaymentResponse, WorkerResponse
+from schemas import PaymentCreate, PaymentUpdate, PaymentResponse, WorkerResponse, PageResponse
 from deps import get_current_user
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -45,7 +45,7 @@ def pay_to_response(p: Payment) -> PaymentResponse:
     )
 
 
-@router.get("", response_model=list[PaymentResponse])
+@router.get("", response_model=PageResponse)
 def list_payments(
     workerId: Optional[int] = None,
     projectId: Optional[int] = None,
@@ -62,10 +62,17 @@ def list_payments(
         q = q.filter(Payment.project_id == projectId)
     if paymentType:
         q = q.filter(Payment.payment_type == paymentType)
+    total = q.count()
     payments = q.options(
         selectinload(Payment.worker),
     ).order_by(Payment.payment_date.desc()).offset(page * size).limit(size).all()
-    return [pay_to_response(p) for p in payments]
+    items = [pay_to_response(p) for p in payments]
+    total_pages = (total + size - 1) // size if total > 0 else 0
+    return PageResponse(
+        content=items, totalElements=total, totalPages=total_pages,
+        size=size, number=page, first=page == 0, last=page >= total_pages - 1,
+        empty=len(items) == 0,
+    )
 
 
 @router.get("/{payment_id}", response_model=PaymentResponse)

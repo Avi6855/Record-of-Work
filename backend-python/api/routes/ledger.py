@@ -2,6 +2,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Optional
+from decimal import Decimal
 from database import get_db
 from models import LedgerEntry
 from schemas import LedgerEntryResponse
@@ -50,11 +51,20 @@ def list_ledger(
     return [ledger_to_response(e) for e in entries]
 
 
-@router.get("/worker/{worker_id}", response_model=list[LedgerEntryResponse])
+@router.get("/worker/{worker_id}")
 def get_worker_ledger(worker_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     entries = db.query(LedgerEntry).filter(
         LedgerEntry.worker_id == worker_id,
         LedgerEntry.organization_id == user.organization_id,
         LedgerEntry.is_voided == False,
     ).order_by(LedgerEntry.entry_date.desc(), LedgerEntry.id.desc()).limit(200).all()
-    return [ledger_to_response(e) for e in entries]
+    items = [ledger_to_response(e) for e in entries]
+    total_debit = sum(float(e.debit or 0) for e in entries)
+    total_credit = sum(float(e.credit or 0) for e in entries)
+    current_balance = float(entries[0].balance or 0) if entries else 0
+    return {
+        "entries": items,
+        "totalDebit": total_debit,
+        "totalCredit": total_credit,
+        "currentBalance": current_balance,
+    }

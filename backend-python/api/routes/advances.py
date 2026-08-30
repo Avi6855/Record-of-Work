@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, selectinload
 from typing import Optional
 from database import get_db
 from models import Advance, Worker
-from schemas import AdvanceCreate, AdvanceUpdate, AdvanceResponse, WorkerResponse
+from schemas import AdvanceCreate, AdvanceUpdate, AdvanceResponse, WorkerResponse, PageResponse
 from deps import get_current_user
 
 router = APIRouter(prefix="/advances", tags=["advances"])
@@ -37,7 +37,7 @@ def adv_to_response(a: Advance) -> AdvanceResponse:
     )
 
 
-@router.get("", response_model=list[AdvanceResponse])
+@router.get("", response_model=PageResponse)
 def list_advances(
     workerId: Optional[int] = None,
     projectId: Optional[int] = None,
@@ -54,8 +54,15 @@ def list_advances(
         q = q.filter(Advance.project_id == projectId)
     if isSettled is not None:
         q = q.filter(Advance.is_settled == isSettled)
+    total = q.count()
     advances = q.options(selectinload(Advance.worker)).order_by(Advance.advance_date.desc()).offset(page * size).limit(size).all()
-    return [adv_to_response(a) for a in advances]
+    items = [adv_to_response(a) for a in advances]
+    total_pages = (total + size - 1) // size if total > 0 else 0
+    return PageResponse(
+        content=items, totalElements=total, totalPages=total_pages,
+        size=size, number=page, first=page == 0, last=page >= total_pages - 1,
+        empty=len(items) == 0,
+    )
 
 
 @router.get("/{advance_id}", response_model=AdvanceResponse)
