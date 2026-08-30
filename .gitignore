@@ -41,3 +41,6 @@ backend/uploads/
 # Misc
 coverage/
 .nyc_output/
+
+# Vercel
+.vercel/
