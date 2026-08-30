@@ -7,7 +7,6 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { Users, CalendarCheck, Wallet, IndianRupee, Receipt, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 interface DashboardData {
   today: { totalWorkers: number; present: number; absent: number; halfDay: number; todayWages: number; todayAdvances: number; todayPayments: number; todayExpenses: number; todayIncome: number; closingCash: number; };
@@ -19,7 +18,35 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/dashboard').then(res => setData(res.data)).catch(() => {
+    api.get('/dashboard').then(res => {
+      const d = res.data;
+      setData({
+        today: {
+          totalWorkers: d.totalWorkers ?? 0,
+          present: d.todayPresent ?? 0,
+          absent: d.todayAbsent ?? 0,
+          halfDay: 0,
+          todayWages: Number(d.todayWages ?? 0),
+          todayAdvances: Number(d.todayAdvances ?? 0),
+          todayPayments: Number(d.todayPayments ?? 0),
+          todayExpenses: Number(d.todayExpenses ?? 0),
+          todayIncome: Number(d.todayPayments ?? 0),
+          closingCash: 0,
+        },
+        overall: {
+          amountDue: Number(d.amountDueToWorkers ?? 0),
+          totalAdvances: 0,
+          clientPending: 0,
+          projectExpenses: 0,
+          totalIncome: 0,
+          availableCash: 0,
+          monthlyWages: Number(d.totalPaymentsThisMonth ?? 0),
+          monthlyExpenses: Number(d.totalExpensesThisMonth ?? 0),
+          monthlyIncome: 0,
+          estimatedProfit: 0,
+        },
+      });
+    }).catch(() => {
       setData({
         today: { totalWorkers: 8, present: 6, absent: 1, halfDay: 1, todayWages: 4200, todayAdvances: 500, todayPayments: 1000, todayExpenses: 300, todayIncome: 5000, closingCash: 12000 },
         overall: { amountDue: 45000, totalAdvances: 12000, clientPending: 35000, projectExpenses: 18000, totalIncome: 65000, availableCash: 35000, monthlyWages: 84000, monthlyExpenses: 12000, monthlyIncome: 25000, estimatedProfit: 13000 }

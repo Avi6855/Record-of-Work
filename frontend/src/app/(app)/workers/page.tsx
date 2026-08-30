@@ -22,8 +22,8 @@ export default function WorkersPage() {
   useEffect(() => {
     setLoading(true);
     api.get('/workers', { params: { page, size: 20, search: search || undefined } })
-      .then(res => { setWorkers(res.data.content); setTotalPages(res.data.totalPages); })
-      .catch(() => { setWorkers([]); })
+      .then(res => { setWorkers(res.data.content || []); setTotalPages(res.data.totalPages || 0); })
+      .catch(() => { setWorkers([]); setTotalPages(0); })
       .finally(() => setLoading(false));
   }, [page, search]);
 

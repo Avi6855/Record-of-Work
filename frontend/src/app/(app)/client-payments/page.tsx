@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import { IndianRupee, Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface ClientPayment { id: number; clientName: string; projectName: string; amount: number; paymentDate: string; paymentMethod: string; description: string; isVoided: boolean; }
 

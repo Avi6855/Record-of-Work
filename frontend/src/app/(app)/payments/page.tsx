@@ -8,7 +8,7 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import { IndianRupee, Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface Payment { id: number; workerName: string; amount: number; paymentDate: string; paymentMethod: string; paymentType: string; description: string; isVoided: boolean; }
 

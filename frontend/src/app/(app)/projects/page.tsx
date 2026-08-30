@@ -18,7 +18,7 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     api.get('/projects', { params: { page: 0, size: 50 } })
-      .then(res => setProjects(res.data.content))
+      .then(res => setProjects(res.data.content || []))
       .catch(() => setProjects([]))
       .finally(() => setLoading(false));
   }, []);

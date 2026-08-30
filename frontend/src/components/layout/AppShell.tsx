@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useEffect } from 'react';
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from 'sonner';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading, setLoading } = useAuthStore();
@@ -14,14 +14,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const storedTheme = (localStorage.getItem('theme') as 'light' | 'dark' | 'system') || 'system';
-    setTheme(storedTheme);
-    
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('accessToken');
-    if (storedUser && token) {
-      useAuthStore.setState({ user: JSON.parse(storedUser), isAuthenticated: true, isLoading: false });
-    } else {
+    try {
+      const storedTheme = (localStorage.getItem('theme') as 'light' | 'dark' | 'system') || 'system';
+      setTheme(storedTheme);
+
+      const storedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('accessToken');
+      if (storedUser && token) {
+        const parsed = JSON.parse(storedUser);
+        useAuthStore.setState({ user: parsed, isAuthenticated: true, isLoading: false });
+      } else {
+        setLoading(false);
+        if (pathname !== '/login') router.push('/login');
+      }
+    } catch {
+      localStorage.removeItem('user');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       setLoading(false);
       if (pathname !== '/login') router.push('/login');
     }
@@ -47,7 +56,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <Toaster position="top-right" toastOptions={{ duration: 3000, style: { borderRadius: '12px', padding: '12px', fontSize: '14px' } }} />
+      <Toaster position="top-right" richColors closeButton />
       <Sidebar />
       <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         <Header />

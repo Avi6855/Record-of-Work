@@ -67,15 +67,12 @@ export const useThemeStore = create<ThemeState>((set) => ({
   theme: 'system',
   resolved: 'light',
   setTheme: (theme) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', theme);
-    }
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('theme', theme);
     const resolved = theme === 'system'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : theme;
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark', resolved === 'dark');
-    }
+    document.documentElement.classList.toggle('dark', resolved === 'dark');
     set({ theme, resolved });
   },
 }));

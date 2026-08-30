@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import { Receipt, Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 const CATEGORIES = ['MACHINE', 'MATERIAL', 'FUEL', 'TRANSPORT', 'FOOD', 'LABOUR', 'TOOLS', 'ELECTRICITY', 'MAINTENANCE', 'RENT', 'OTHER'];
 

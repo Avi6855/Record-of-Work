@@ -16,12 +16,12 @@ export default function WagesPage() {
 
   useEffect(() => {
     api.get('/workers', { params: { page: 0, size: 100 } }).then(res => {
-      const workerList = res.data.content;
+      const workerList = res.data.content || [];
       setWorkers(workerList);
       return Promise.all(workerList.map((w: any) =>
         api.get(`/workers/${w.id}/wage`, { params: { year, month } }).then(r => r.data)
       ));
-    }).then(wageList => setWages(wageList)).finally(() => setLoading(false));
+    }).then(wageList => setWages(wageList || [])).catch(() => {}).finally(() => setLoading(false));
   }, [year, month]);
 
   return (

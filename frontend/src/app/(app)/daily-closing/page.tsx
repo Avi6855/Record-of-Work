@@ -5,7 +5,7 @@ import { t, formatCurrency } from '@/lib/i18n';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface DailyClosing { id: number; closingDate: string; totalWorkers: number; presentCount: number; absentCount: number; halfDayCount: number; totalWages: number; totalAdvances: number; totalPayments: number; totalExpenses: number; totalIncome: number; openingCash: number; closingCash: number; isClosed: boolean; notes: string; }
 

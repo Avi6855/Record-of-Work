@@ -16,9 +16,10 @@ export default function LedgerPage() {
 
   useEffect(() => {
     api.get('/workers', { params: { page: 0, size: 100 } }).then(res => {
-      setWorkers(res.data.content);
-      if (res.data.content.length > 0) setSelectedWorker(res.data.content[0].id);
-    }).finally(() => setLoading(false));
+      const list = res.data.content || [];
+      setWorkers(list);
+      if (list.length > 0) setSelectedWorker(list[0].id);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function LedgerPage() {
                   <th className="text-right p-3 text-sm font-medium text-gray-500">{t('balance')}</th>
                 </tr></thead>
                 <tbody>
-                  {ledger.entries.map((e) => (
+                  {(ledger.entries || []).map((e) => (
                     <tr key={e.id} className="border-b border-gray-50 dark:border-gray-800">
                       <td className="p-3 text-sm">{formatDate(e.entryDate)}</td>
                       <td className="p-3 text-sm">{e.description} <Badge variant="info" className="ml-1">{e.entryType}</Badge></td>

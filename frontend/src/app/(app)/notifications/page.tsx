@@ -15,7 +15,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/notifications', { params: { page: 0, size: 50 } }).then(res => setNotifications(res.data.content)).finally(() => setLoading(false));
+    api.get('/notifications', { params: { page: 0, size: 50 } }).then(res => setNotifications(res.data.content || [])).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const markAllRead = async () => {

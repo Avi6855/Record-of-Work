@@ -6,7 +6,7 @@ import { t } from '@/lib/i18n';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export default function NewWorkerPage() {
   const router = useRouter();

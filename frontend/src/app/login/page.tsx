@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import { t, setLocale, getLocale } from '@/lib/i18n';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -30,7 +30,19 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await api.post('/auth/login', { username, password });
-      login(res.data.user, res.data.accessToken, res.data.refreshToken);
+      const u = res.data.user;
+      login({
+        id: u.id,
+        username: u.username,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        phone: u.phone || '',
+        organizationId: u.organization?.id || 0,
+        organizationName: u.organization?.name || '',
+        roles: (u.roles || []).map((r: any) => r.name),
+        isActive: u.isActive,
+      }, res.data.accessToken, res.data.refreshToken);
       toast.success(locale === 'mr' ? 'लॉगिन यशस्वी!' : 'Login successful!');
       router.push('/dashboard');
     } catch (err: any) {

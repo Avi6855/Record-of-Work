@@ -6,7 +6,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { getStatusSymbol, getStatusColor } from '@/lib/utils';
 import { CalendarCheck, Users, CheckCircle, XCircle, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 const STATUS_OPTIONS = ['PRESENT', 'ABSENT', 'HALF_DAY', 'OVERTIME', 'LEAVE', 'HOLIDAY'] as const;
@@ -28,8 +28,8 @@ export default function AttendancePage() {
       api.get('/projects', { params: { page: 0, size: 50 } }),
       api.get('/workers', { params: { page: 0, size: 100 } })
     ]).then(([pRes, wRes]) => {
-      setProjects(pRes.data.content);
-      setWorkers(wRes.data.content);
+      setProjects(pRes.data.content || []);
+      setWorkers(wRes.data.content || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
