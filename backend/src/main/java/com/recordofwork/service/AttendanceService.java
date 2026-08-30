@@ -44,10 +44,10 @@ public class AttendanceService {
             Map<String, String> dailyStatus = new LinkedHashMap<>();
             for (Attendance a : attendances) {
                 if (a.getWorker().getId().equals(w.getId()) && a.getProject().getId().equals(projectId)) {
-                    dailyStatus.put(a.getAttendanceDate().toString(), mapStatus(a.getStatus()));
+                    dailyStatus.put(a.getAttendanceDate().toString(), mapStatus(a.getStatus().name()));
                 }
             }
-            notebook.put(w.getId().toString(), dailyStatus);
+            notebook.put(w.getId(), dailyStatus);
         }
 
         Map<String, Map<Long, String>> result = new LinkedHashMap<>();
@@ -55,7 +55,7 @@ public class AttendanceService {
         while (!d.isAfter(endDate)) {
             Map<Long, String> dayMap = new LinkedHashMap<>();
             for (Worker w : workers) {
-                dayMap.put(w.getId(), notebook.getOrDefault(w.getId().toString(), Collections.emptyMap())
+                dayMap.put(w.getId(), notebook.getOrDefault(w.getId(), Collections.emptyMap())
                     .getOrDefault(d.toString(), ""));
             }
             result.put(d.toString(), dayMap);

@@ -20,8 +20,8 @@ public class PageResponse<T> {
         response.setSize(page.getSize());
         response.setTotalElements(page.getTotalElements());
         response.setTotalPages(page.getTotalPages());
-        response.setIsFirst(page.isFirst());
-        response.setIsLast(page.isLast());
+        response.setFirst(page.isFirst());
+        response.setLast(page.isLast());
         return response;
     }
 }
