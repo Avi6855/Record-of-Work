@@ -23,7 +23,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsernameAndDeletedFalse(username)
+        User user = userRepository.findByUsernameAndIsDeletedFalse(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         if (!user.getIsActive()) {

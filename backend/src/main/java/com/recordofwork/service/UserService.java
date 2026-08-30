@@ -25,21 +25,21 @@ public class UserService {
     }
 
     public PageResponse<UserDTO> getAllUsers(int page, int size) {
-        Page<User> page1 = userRepository.findByDeletedFalse(PageRequest.of(page, size));
+        Page<User> page1 = userRepository.findByIsDeletedFalse(PageRequest.of(page, size));
         return PageResponse.of(page1.map(this::toDTO));
     }
 
     public PageResponse<UserDTO> getUsersByOrganization(Long orgId, int page, int size) {
-        Page<User> page1 = userRepository.findByOrganizationIdAndDeletedFalse(orgId, PageRequest.of(page, size));
+        Page<User> page1 = userRepository.findByOrganizationIdAndIsDeletedFalse(orgId, PageRequest.of(page, size));
         return PageResponse.of(page1.map(this::toDTO));
     }
 
     @Transactional
     public UserDTO createUser(CreateUserRequest request) {
-        if (userRepository.existsByUsernameAndDeletedFalse(request.getUsername())) {
+        if (userRepository.existsByUsernameAndIsDeletedFalse(request.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
-        if (userRepository.existsByEmailAndDeletedFalse(request.getEmail())) {
+        if (userRepository.existsByEmailAndIsDeletedFalse(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
         User user = User.builder()

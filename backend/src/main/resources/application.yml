@@ -7,9 +7,9 @@ spring:
   application:
     name: record-of-work
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:record_of_work}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata&characterEncoding=utf8mb4&createDatabaseIfNotExist=true
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:record_of_work}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata&characterEncoding=UTF-8&createDatabaseIfNotExist=true
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:Avi6855#}
+    password: "${DB_PASSWORD:Avi6855#}"
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20

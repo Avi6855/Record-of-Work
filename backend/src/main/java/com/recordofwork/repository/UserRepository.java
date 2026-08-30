@@ -12,12 +12,12 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsernameAndDeletedFalse(String username);
-    Optional<User> findByEmailAndDeletedFalse(String email);
-    boolean existsByUsernameAndDeletedFalse(String username);
-    boolean existsByEmailAndDeletedFalse(String email);
-    Page<User> findByOrganizationIdAndDeletedFalse(Long organizationId, Pageable pageable);
-    Page<User> findByDeletedFalse(Pageable pageable);
+    Optional<User> findByUsernameAndIsDeletedFalse(String username);
+    Optional<User> findByEmailAndIsDeletedFalse(String email);
+    boolean existsByUsernameAndIsDeletedFalse(String username);
+    boolean existsByEmailAndIsDeletedFalse(String email);
+    Page<User> findByOrganizationIdAndIsDeletedFalse(Long organizationId, Pageable pageable);
+    Page<User> findByIsDeletedFalse(Pageable pageable);
     
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName AND u.organization.id = :orgId AND u.isDeleted = false")
     Page<User> findByRoleNameAndOrganization(@Param("roleName") String roleName, @Param("orgId") Long orgId, Pageable pageable);

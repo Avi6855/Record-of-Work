@@ -38,7 +38,7 @@ public class AuthService {
             String accessToken = tokenProvider.generateAccessToken(authentication);
             String refreshToken = tokenProvider.generateRefreshToken(authentication);
 
-            User user = userRepository.findByUsernameAndDeletedFalse(request.getUsername()).orElseThrow();
+            User user = userRepository.findByUsernameAndIsDeletedFalse(request.getUsername()).orElseThrow();
             user.setLastLogin(java.time.LocalDateTime.now());
             userRepository.save(user);
 
@@ -52,7 +52,7 @@ public class AuthService {
             response.setUser(toUserDTO(user));
             return response;
         } catch (BadCredentialsException e) {
-            User user = userRepository.findByUsernameAndDeletedFalse(request.getUsername()).orElse(null);
+            User user = userRepository.findByUsernameAndIsDeletedFalse(request.getUsername()).orElse(null);
             if (user != null) {
                 LoginHistory loginHistory = LoginHistory.builder()
                     .user(user).ipAddress(ip).userAgent(userAgent).isSuccess(false)
@@ -70,7 +70,7 @@ public class AuthService {
         String username = tokenProvider.getUsernameFromToken(request.getRefreshToken());
         String newAccessToken = tokenProvider.generateAccessToken(username);
         String newRefreshToken = tokenProvider.generateRefreshToken(username);
-        User user = userRepository.findByUsernameAndDeletedFalse(username).orElseThrow();
+        User user = userRepository.findByUsernameAndIsDeletedFalse(username).orElseThrow();
 
         LoginResponse response = new LoginResponse();
         response.setAccessToken(newAccessToken);
@@ -83,7 +83,7 @@ public class AuthService {
     public void changePassword(ChangePasswordRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
-        User user = userRepository.findByUsernameAndDeletedFalse(username)
+        User user = userRepository.findByUsernameAndIsDeletedFalse(username)
             .orElseThrow(() -> new RuntimeException("User not found"));
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new RuntimeException("Current password is incorrect");
@@ -98,7 +98,7 @@ public class AuthService {
 
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return userRepository.findByUsernameAndDeletedFalse(auth.getName())
+        return userRepository.findByUsernameAndIsDeletedFalse(auth.getName())
             .orElseThrow(() -> new RuntimeException("User not found"));
     }
 

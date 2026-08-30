@@ -72,11 +72,11 @@ INSERT INTO `organizations` (`name`, `marathi_name`, `contact_person`, `contact_
 ('Record of Work', 'कामचा हिशोब', 'Admin', '9876543210', 'Pune, Maharashtra', 'INR', 'Asia/Kolkata', 1);
 
 -- USERS (password: admin123 BCrypt hashed)
-INSERT INTO `users` (`username`, `password`, `first_name`, `last_name`, `email`, `phone`, `organization_id`, `is_active`) VALUES
-('superadmin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Super', 'Admin', 'superadmin@recordofwork.com', '9876543210', 1, 1),
-('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Admin', 'Owner', 'admin@recordofwork.com', '9876543211', 1, 1),
-('supervisor1', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Ramesh', 'Patil', 'supervisor@recordofwork.com', '9876543212', 1, 1),
-('worker1', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Aniket', 'Sharma', 'worker1@recordofwork.com', '9876543213', 1, 1);
+INSERT INTO `users` (`username`, `password`, `first_name`, `last_name`, `email`, `phone`, `organization_id`, `is_active`, `is_deleted`, `must_change_password`, `version`) VALUES
+('superadmin', '$2b$10$rn8bGm3Sj8juH0HiG5codOnv8etutFs3tyI31XLhwBxQelP7w96hy', 'Super', 'Admin', 'superadmin@recordofwork.com', '9876543210', 1, 1, 0, 0, 0),
+('admin', '$2b$10$rn8bGm3Sj8juH0HiG5codOnv8etutFs3tyI31XLhwBxQelP7w96hy', 'Admin', 'Owner', 'admin@recordofwork.com', '9876543211', 1, 1, 0, 0, 0),
+('supervisor1', '$2b$10$rn8bGm3Sj8juH0HiG5codOnv8etutFs3tyI31XLhwBxQelP7w96hy', 'Ramesh', 'Patil', 'supervisor@recordofwork.com', '9876543212', 1, 1, 0, 0, 0),
+('worker1', '$2b$10$rn8bGm3Sj8juH0HiG5codOnv8etutFs3tyI31XLhwBxQelP7w96hy', 'Aniket', 'Sharma', 'worker1@recordofwork.com', '9876543213', 1, 1, 0, 0, 0);
 
 -- USER_ROLES
 INSERT INTO `user_roles` (`user_id`, `role_id`) VALUES
