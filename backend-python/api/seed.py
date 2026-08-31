@@ -16,10 +16,35 @@ def create_tables():
     Base.metadata.create_all(bind=engine)
     print("Tables created.")
 
+def _backfill_joining_dates(db):
+    from datetime import date
+    default_dates = {
+        "Aniket": date(2024, 1, 15),
+        "Suhas": date(2024, 2, 1),
+        "Khandu": date(2024, 3, 10),
+        "Avadhut": date(2024, 1, 20),
+        "Rahul": date(2024, 4, 5),
+        "Suresh": date(2024, 2, 15),
+        "Mohan": date(2024, 5, 1),
+        "Vikram": date(2024, 3, 20),
+    }
+    updated = 0
+    for w in db.query(Worker).filter(Worker.is_deleted == False, Worker.joining_date == None).all():
+        if w.name in default_dates:
+            w.joining_date = default_dates[w.name]
+            updated += 1
+    if updated:
+        db.commit()
+        print(f"Backfilled joining dates for {updated} workers.")
+    else:
+        print("No workers need joining date backfill.")
+
+
 def seed_data():
     db = SessionLocal()
     try:
         if db.query(Organization).first():
+            _backfill_joining_dates(db)
             print("Data already seeded. Skipping.")
             return
 
