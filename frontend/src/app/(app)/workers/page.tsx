@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useWorkersQuery } from '@/lib/hooks';
-import { t, formatCurrency, getWorkTypeLabel } from '@/lib/i18n';
+import { t, formatCurrency, formatDate, getWorkTypeLabel } from '@/lib/i18n';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import api, { PageResponse } from '@/lib/api';
 
-interface Worker { id: number; name: string; marathiName: string; phone: string; dailyWage: number; isActive: boolean; outstandingBalance: number; workType: string; village: string; }
+interface Worker { id: number; name: string; marathiName: string; phone: string; dailyWage: number; isActive: boolean; outstandingBalance: number; workType: string; village: string; joiningDate: string | null; }
 
 export default function WorkersPage() {
   const [search, setSearch] = useState('');
@@ -99,6 +99,7 @@ export default function WorkersPage() {
                 <th className="text-left p-4 text-sm font-medium text-gray-500">{t('workType')}</th>
                 <th className="text-left p-4 text-sm font-medium text-gray-500">{t('dailyWage')}</th>
                 <th className="text-left p-4 text-sm font-medium text-gray-500">{t('balance')}</th>
+                <th className="text-left p-4 text-sm font-medium text-gray-500">{t('joiningDate')}</th>
                 <th className="text-left p-4 text-sm font-medium text-gray-500">{t('status')}</th>
                 <th className="text-right p-4 text-sm font-medium text-gray-500">{t('view')}</th>
               </tr></thead>
@@ -110,6 +111,7 @@ export default function WorkersPage() {
                     <td className="p-4 text-sm"><span className="inline-flex px-2 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-medium">{getWorkTypeLabel(w.workType)}</span></td>
                     <td className="p-4 text-sm text-gray-600 dark:text-gray-300">{formatCurrency(w.dailyWage)}</td>
                     <td className="p-4"><span className={`text-sm font-medium ${(w.outstandingBalance || 0) > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{formatCurrency(w.outstandingBalance || 0)}</span></td>
+                    <td className="p-4 text-sm text-gray-600 dark:text-gray-300">{w.joiningDate ? formatDate(w.joiningDate) : '-'}</td>
                     <td className="p-4"><Badge variant={w.isActive ? 'success' : 'danger'}>{w.isActive ? t('active') : t('inactive')}</Badge></td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-2">

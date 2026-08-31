@@ -120,21 +120,22 @@ def seed_data():
             clients[name] = c
 
         # Workers
+        from datetime import date as _date
         workers_data = {}
-        for name, mname, phone, village, wtype, skill, wage, otrate in [
-            ("Aniket", "अनिकेत", "9876543301", "Pune", "Mason", "Brickwork", 700, 100),
-            ("Suhas", "सुहास", "9876543302", "Pune", "Carpenter", "Wood Work", 800, 120),
-            ("Khandu", "खंडू", "9876543303", "Wagholi", "Labour", "General", 600, 80),
-            ("Avadhut", "अवधूत", "9876543304", "Hadapsar", "Mason", "Plastering", 750, 110),
-            ("Rahul", "राहुल", "9876543305", "Kothrud", "Electrician", "Wiring", 900, 130),
-            ("Suresh", "सुरेश", "9876543306", "Baner", "Plumber", "Plumbing", 850, 125),
-            ("Mohan", "मोहन", "9876543307", "Sinhagad", "Labour", "General", 600, 80),
-            ("Vikram", "विक्रम", "9876543308", "Undri", "Painting", "Paint Work", 750, 110),
+        for name, mname, phone, village, wtype, skill, wage, otrate, jdate in [
+            ("Aniket", "अनिकेत", "9876543301", "Pune", "Mason", "Brickwork", 700, 100, _date(2024, 1, 15)),
+            ("Suhas", "सुहास", "9876543302", "Pune", "Carpenter", "Wood Work", 800, 120, _date(2024, 2, 1)),
+            ("Khandu", "खंडू", "9876543303", "Wagholi", "Labour", "General", 600, 80, _date(2024, 3, 10)),
+            ("Avadhut", "अवधूत", "9876543304", "Hadapsar", "Mason", "Plastering", 750, 110, _date(2024, 1, 20)),
+            ("Rahul", "राहुल", "9876543305", "Kothrud", "Electrician", "Wiring", 900, 130, _date(2024, 4, 5)),
+            ("Suresh", "सुरेश", "9876543306", "Baner", "Plumber", "Plumbing", 850, 125, _date(2024, 2, 15)),
+            ("Mohan", "मोहन", "9876543307", "Sinhagad", "Labour", "General", 600, 80, _date(2024, 5, 1)),
+            ("Vikram", "विक्रम", "9876543308", "Undri", "Painting", "Paint Work", 750, 110, _date(2024, 3, 20)),
         ]:
             w = Worker(
                 organization_id=org.id, name=name, marathi_name=mname,
                 phone=phone, village=village, work_type=wtype, skill=skill,
-                daily_wage=wage, overtime_rate=otrate,
+                daily_wage=wage, overtime_rate=otrate, joining_date=jdate,
             )
             db.add(w)
             db.flush()
