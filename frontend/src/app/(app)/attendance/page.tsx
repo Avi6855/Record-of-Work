@@ -11,6 +11,30 @@ import { useAllWorkersQuery, useAllProjectsQuery, useDailyAttendanceQuery } from
 import { useQueryClient } from '@tanstack/react-query';
 
 const STATUS_OPTIONS = ['PRESENT', 'ABSENT', 'HALF_DAY', 'OVERTIME', 'LEAVE', 'HOLIDAY'] as const;
+const STATUS_TO_SYMBOL: Record<string, string> = { PRESENT: '✓', ABSENT: 'X', HALF_DAY: '½', OVERTIME: 'OT', LEAVE: 'L', HOLIDAY: 'H' };
+
+function patchNotebookOptimistic(queryClient: any, projectId: number, dateStr: string, workerId: number, status: string) {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const symbol = STATUS_TO_SYMBOL[status] ?? status;
+  const key: any[] = ['attendance', 'notebook', projectId, year, month];
+  queryClient.setQueryData(key, (old: any) => {
+    const next = old ? JSON.parse(JSON.stringify(old)) : {};
+    if (!next[dateStr]) next[dateStr] = {};
+    next[dateStr][String(workerId)] = symbol;
+    return next;
+  });
+  // also patch any other notebook cache with same project/year/month via setQueriesData
+  try {
+    queryClient.setQueriesData({ queryKey: ['attendance', 'notebook'] }, (old: any) => {
+      if (!old) return old;
+      // only patch if old has this date key or is object - conservative
+      if (typeof old !== 'object') return old;
+      return old;
+    });
+  } catch {}
+}
 
 interface Attendance { id: number; workerId: number; workerName: string; workerMarathiName: string; status: string; }
 interface Worker { id: number; name: string; marathiName: string; dailyWage: number; }
@@ -65,6 +89,9 @@ export default function AttendancePage() {
     setSaving((prev) => new Set(prev).add(workerId));
     setSaved((prev) => { const n = new Set(prev); n.delete(workerId); return n; });
 
+    // Optimistically patch monthly notebook so it shows instantly
+    patchNotebookOptimistic(queryClient, projectId, date, workerId, status);
+
     api.post('/attendance', { workerId, projectId, attendanceDate: date, status })
       .then(() => {
         // small Saved indicator
@@ -72,10 +99,9 @@ export default function AttendancePage() {
         setTimeout(() => {
           setSaved((prev) => { const n = new Set(prev); n.delete(workerId); return n; });
         }, 1500);
-        // Invalidate shared attendance queries so monthly notebook reflects immediately (single source of truth)
+        // Invalidate for server reconciliation (keep optimistic data until refetch)
         queryClient.invalidateQueries({ queryKey: ['attendance', 'notebook'] });
         queryClient.invalidateQueries({ queryKey: ['attendance', 'daily'] });
-        // optional batch where safe: we keep single but query invalidation batches
       })
       .catch(() => {
         // Rollback on fail
@@ -101,6 +127,20 @@ export default function AttendancePage() {
     // Mark all as saving for subtle indication but not blocking
     const allIds = new Set(workers.map((w) => w.id));
     setSaving(allIds);
+
+    // Optimistically patch monthly for all workers
+    {
+      const d2 = new Date(date);
+      const y2 = d2.getFullYear();
+      const m2 = d2.getMonth() + 1;
+      const key2: any[] = ['attendance', 'notebook', projectId, y2, m2];
+      queryClient.setQueryData(key2, (old: any) => {
+        const next = old ? JSON.parse(JSON.stringify(old)) : {};
+        if (!next[date]) next[date] = {};
+        workers.forEach((w) => { next[date][String(w.id)] = '✓'; });
+        return next;
+      });
+    }
 
     api.post('/attendance/all-present', null, { params: { projectId, date } })
       .then(() => {

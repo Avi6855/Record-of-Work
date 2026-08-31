@@ -106,7 +106,9 @@ export function useNotebookQuery(projectId: number, year: number, month: number,
       return res.data as Record<string, Record<string, string>>;
     },
     enabled: enabled && !!projectId && !!year && !!month,
-    staleTime: 30 * 1000,
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000,
+    refetchOnMount: 'always',
     placeholderData: (prev) => prev,
   });
 }
