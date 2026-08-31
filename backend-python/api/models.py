@@ -2,7 +2,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy import (
     Column, BigInteger, String, Text, Boolean, Date, DateTime, Integer, Numeric,
-    ForeignKey, Enum as SAEnum, UniqueConstraint, Table
+    ForeignKey, Enum as SAEnum, UniqueConstraint, Table, Index
 )
 from sqlalchemy.orm import relationship
 from database import Base
@@ -189,6 +189,11 @@ class User(Base):
 
 class Worker(Base):
     __tablename__ = "workers"
+    __table_args__ = (
+        Index("ix_workers_org_active", "organization_id", "is_deleted", "is_active"),
+        Index("ix_workers_org_worktype", "organization_id", "work_type"),
+        Index("ix_workers_org_name", "organization_id", "name"),
+    )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     organization_id = Column(BigInteger, ForeignKey("organizations.id"), nullable=False)
@@ -239,6 +244,9 @@ class Client(Base):
 
 class Project(Base):
     __tablename__ = "projects"
+    __table_args__ = (
+        Index("ix_projects_org_status", "organization_id", "is_deleted", "status"),
+    )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     organization_id = Column(BigInteger, ForeignKey("organizations.id"), nullable=False)
@@ -267,6 +275,10 @@ class Attendance(Base):
     __tablename__ = "attendance"
     __table_args__ = (
         UniqueConstraint("worker_id", "project_id", "attendance_date", name="uk_attendance_worker_project_date"),
+        Index("ix_attendance_org_date", "organization_id", "attendance_date"),
+        Index("ix_attendance_worker_date", "worker_id", "attendance_date"),
+        Index("ix_attendance_project_date", "project_id", "attendance_date"),
+        Index("ix_attendance_org_worker_date", "organization_id", "worker_id", "attendance_date"),
     )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -292,6 +304,10 @@ class Attendance(Base):
 
 class Advance(Base):
     __tablename__ = "advances"
+    __table_args__ = (
+        Index("ix_advances_org_worker_date", "organization_id", "worker_id", "advance_date"),
+        Index("ix_advances_org_project", "organization_id", "project_id"),
+    )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     organization_id = Column(BigInteger, ForeignKey("organizations.id"), nullable=False)
@@ -319,6 +335,10 @@ class Advance(Base):
 
 class Payment(Base):
     __tablename__ = "payments"
+    __table_args__ = (
+        Index("ix_payments_org_worker_date", "organization_id", "worker_id", "payment_date"),
+        Index("ix_payments_org_project", "organization_id", "project_id"),
+    )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     organization_id = Column(BigInteger, ForeignKey("organizations.id"), nullable=False)
@@ -346,6 +366,9 @@ class Payment(Base):
 
 class ClientPayment(Base):
     __tablename__ = "client_payments"
+    __table_args__ = (
+        Index("ix_clientpay_org_project", "organization_id", "project_id"),
+    )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     organization_id = Column(BigInteger, ForeignKey("organizations.id"), nullable=False)
@@ -369,6 +392,10 @@ class ClientPayment(Base):
 
 class Expense(Base):
     __tablename__ = "expenses"
+    __table_args__ = (
+        Index("ix_expenses_org_project_date", "organization_id", "project_id", "expense_date"),
+        Index("ix_expenses_org_category", "organization_id", "category"),
+    )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     organization_id = Column(BigInteger, ForeignKey("organizations.id"), nullable=False)
@@ -396,6 +423,10 @@ class Expense(Base):
 
 class LedgerEntry(Base):
     __tablename__ = "ledger_entries"
+    __table_args__ = (
+        Index("ix_ledger_org_worker_date", "organization_id", "worker_id", "entry_date"),
+        Index("ix_ledger_org_project", "organization_id", "project_id"),
+    )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     organization_id = Column(BigInteger, ForeignKey("organizations.id"), nullable=False)
@@ -421,10 +452,14 @@ class LedgerEntry(Base):
 
 class DailyClosing(Base):
     __tablename__ = "daily_closings"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "closing_date", name="uk_daily_closing_org_date"),
+        Index("ix_daily_closing_org_date", "organization_id", "closing_date"),
+    )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     organization_id = Column(BigInteger, ForeignKey("organizations.id"), nullable=False)
-    closing_date = Column(Date, nullable=False, unique=True)
+    closing_date = Column(Date, nullable=False)
     total_workers = Column(Integer, default=0)
     present_count = Column(Integer, default=0)
     absent_count = Column(Integer, default=0)
@@ -479,6 +514,9 @@ class MonthlySettlement(Base):
 
 class Notification(Base):
     __tablename__ = "notifications"
+    __table_args__ = (
+        Index("ix_notif_user_read", "user_id", "is_read"),
+    )
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     organization_id = Column(BigInteger, ForeignKey("organizations.id"))
@@ -494,6 +532,34 @@ class Notification(Base):
 
     organization = relationship("Organization", backref="notifications", lazy="selectin")
     user = relationship("User", backref="notifications", lazy="selectin")
+
+
+class ProjectAdvancePayment(Base):
+    __tablename__ = "project_advance_payments"
+    __table_args__ = (
+        Index("ix_proj_adv_org_project", "organization_id", "project_id"),
+        Index("ix_proj_adv_org_date", "organization_id", "payment_date"),
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    organization_id = Column(BigInteger, ForeignKey("organizations.id"), nullable=False)
+    project_id = Column(BigInteger, ForeignKey("projects.id"), nullable=False)
+    amount = Column(Numeric(14, 2), nullable=False)
+    payment_date = Column(Date, nullable=False)
+    payment_method = Column(String(20), default="CASH", nullable=False)
+    description = Column(String(500))
+    notes = Column(Text)
+    reference_number = Column(String(100))
+    is_voided = Column(Boolean, default=False, nullable=False)
+    voided_by = Column(BigInteger)
+    voided_at = Column(DateTime)
+    void_reason = Column(String(500))
+    created_by = Column(BigInteger)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    organization = relationship("Organization", backref="project_advance_payments", lazy="selectin")
+    project = relationship("Project", backref="advance_payments", lazy="selectin")
 
 
 class SystemSetting(Base):

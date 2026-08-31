@@ -77,7 +77,7 @@ def list_payments(
 
 @router.get("/{payment_id}", response_model=PaymentResponse)
 def get_payment(payment_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    p = db.query(Payment).options(selectinload(Payment.worker)).filter(Payment.id == payment_id).first()
+    p = db.query(Payment).options(selectinload(Payment.worker)).filter(Payment.id == payment_id, Payment.organization_id == user.organization_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Payment not found")
     return pay_to_response(p)
@@ -101,7 +101,7 @@ def create_payment(data: PaymentCreate, db: Session = Depends(get_db), user=Depe
 
 @router.put("/{payment_id}", response_model=PaymentResponse)
 def update_payment(payment_id: int, data: PaymentUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    p = db.query(Payment).filter(Payment.id == payment_id).first()
+    p = db.query(Payment).filter(Payment.id == payment_id, Payment.organization_id == user.organization_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Payment not found")
     for field, value in data.model_dump(exclude_unset=True).items():
@@ -113,8 +113,8 @@ def update_payment(payment_id: int, data: PaymentUpdate, db: Session = Depends(g
 
 
 @router.post("/{payment_id}/void")
-def void_payment(payment_id: int, reason: str = "", db: Session = Depends(get_db), user=Depends(get_current_user)):
-    p = db.query(Payment).filter(Payment.id == payment_id).first()
+def void_payment_post(payment_id: int, reason: str = "", db: Session = Depends(get_db), user=Depends(get_current_user)):
+    p = db.query(Payment).filter(Payment.id == payment_id, Payment.organization_id == user.organization_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Payment not found")
     p.is_voided = True
@@ -124,3 +124,8 @@ def void_payment(payment_id: int, reason: str = "", db: Session = Depends(get_db
     p.voided_at = datetime.now(timezone.utc)
     db.commit()
     return {"message": "Payment voided"}
+
+
+@router.put("/{payment_id}/void")
+def void_payment_put(payment_id: int, reason: str = "", db: Session = Depends(get_db), user=Depends(get_current_user)):
+    return void_payment_post(payment_id, reason, db, user)

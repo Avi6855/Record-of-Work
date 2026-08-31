@@ -5,8 +5,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/a
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 15000,
 });
 
+// Request interceptor - attach token
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken');
@@ -17,6 +19,9 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Single-flight refresh to prevent parallel refresh storms
+let refreshPromise: Promise<string> | null = null;
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -26,19 +31,34 @@ api.interceptors.response.use(
       const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
       if (refreshToken) {
         try {
-          const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
-          const { accessToken, refreshToken: newRefresh } = res.data;
-          localStorage.setItem('accessToken', accessToken);
-          localStorage.setItem('refreshToken', newRefresh);
+          if (!refreshPromise) {
+            refreshPromise = axios
+              .post(`${API_BASE_URL}/auth/refresh`, { refreshToken })
+              .then((res) => {
+                const { accessToken, refreshToken: newRefresh } = res.data;
+                localStorage.setItem('accessToken', accessToken);
+                localStorage.setItem('refreshToken', newRefresh);
+                return accessToken;
+              })
+              .finally(() => {
+                refreshPromise = null;
+              });
+          }
+          const accessToken = await refreshPromise;
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         } catch {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
+          localStorage.removeItem('user');
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         }
       } else {
-        window.location.href = '/login';
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);
@@ -49,10 +69,15 @@ export default api;
 
 export interface PageResponse<T> {
   content: T[];
-  page: number;
-  size: number;
   totalElements: number;
   totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+  // compat aliases
+  page: number;
   isFirst: boolean;
   isLast: boolean;
 }

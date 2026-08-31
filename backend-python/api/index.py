@@ -11,6 +11,7 @@ from routes import (
     auth, workers, projects, attendance, payments, advances,
     expenses, clients, client_payments, ledger, dashboard,
     daily_closing, notifications, users, reports, settings as settings_router,
+    wages,
 )
 
 app = FastAPI(title="Record of Work API", version="1.0.0")
@@ -38,6 +39,7 @@ app.include_router(daily_closing.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
+app.include_router(wages.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
 
 _db_initialized = False

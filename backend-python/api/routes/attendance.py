@@ -101,6 +101,60 @@ def mark_all_present(
     return {"message": "All present", "created": created}
 
 
+STATUS_TO_SYMBOL = {
+    "PRESENT": "✓",
+    "ABSENT": "X",
+    "HALF_DAY": "½",
+    "OVERTIME": "OT",
+    "LEAVE": "L",
+    "HOLIDAY": "H",
+}
+
+@router.get("/notebook")
+def attendance_notebook(
+    projectId: int = Query(...),
+    year: int = Query(..., ge=2000, le=2100),
+    month: int = Query(..., ge=1, le=12),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """
+    Monthly notebook derived directly from same Attendance table (single source of truth).
+    Returns { "YYYY-MM-DD": { workerId: "✓|X|½|OT|L|H", ... }, ... }
+    Frontend monthly view uses this; daily edits automatically reflect here.
+    """
+    import calendar
+    _, last_day = calendar.monthrange(year, month)
+    start = date(year, month, 1)
+    end = date(year, month, last_day)
+    records = db.query(Attendance).filter(
+        Attendance.organization_id == user.organization_id,
+        Attendance.project_id == projectId,
+        Attendance.attendance_date >= start,
+        Attendance.attendance_date <= end,
+    ).all()
+    result: dict[str, dict[str, str]] = {}
+    for r in records:
+        d = r.attendance_date.isoformat()
+        if d not in result:
+            result[d] = {}
+        symbol = STATUS_TO_SYMBOL.get(r.status, r.status)
+        result[d][str(r.worker_id)] = symbol
+    return result
+
+
+@router.get("/monthly")
+def attendance_monthly(
+    projectId: int = Query(...),
+    year: int = Query(..., ge=2000, le=2100),
+    month: int = Query(..., ge=1, le=12),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """Alias for notebook - same derivation, alternate name for compatibility."""
+    return attendance_notebook(projectId=projectId, year=year, month=month, db=db, user=user)
+
+
 @router.get("", response_model=list[AttendanceResponse])
 def list_attendance(
     projectId: Optional[int] = None,
@@ -145,9 +199,20 @@ def create_attendance(data: AttendanceCreate, db: Session = Depends(get_db), use
         Attendance.worker_id == data.workerId,
         Attendance.project_id == data.projectId,
         Attendance.attendance_date == data.attendanceDate,
+        Attendance.organization_id == user.organization_id,
     ).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Attendance already marked for this worker on this date")
+        # Upsert: update existing record - single source of truth, enables optimistic PUT via POST
+        existing.status = data.status
+        if data.overtimeHours is not None:
+            existing.overtime_hours = data.overtimeHours
+        if data.notes is not None:
+            existing.notes = data.notes
+        existing.entry_source = data.entrySource
+        existing.marked_by = user.id
+        db.commit()
+        db.refresh(existing)
+        return att_to_response(existing)
     att = Attendance(
         organization_id=user.organization_id,
         worker_id=data.workerId, project_id=data.projectId,
@@ -164,15 +229,23 @@ def create_attendance(data: AttendanceCreate, db: Session = Depends(get_db), use
 @router.post("/bulk", status_code=201)
 def bulk_create_attendance(records: list[AttendanceCreate], db: Session = Depends(get_db), user=Depends(get_current_user)):
     created = 0
-    skipped = 0
+    updated = 0
     for data in records:
         existing = db.query(Attendance).filter(
             Attendance.worker_id == data.workerId,
             Attendance.project_id == data.projectId,
             Attendance.attendance_date == data.attendanceDate,
+            Attendance.organization_id == user.organization_id,
         ).first()
         if existing:
-            skipped += 1
+            existing.status = data.status
+            if data.overtimeHours is not None:
+                existing.overtime_hours = data.overtimeHours
+            if data.notes is not None:
+                existing.notes = data.notes
+            existing.entry_source = data.entrySource
+            existing.marked_by = user.id
+            updated += 1
             continue
         att = Attendance(
             organization_id=user.organization_id,
@@ -184,7 +257,7 @@ def bulk_create_attendance(records: list[AttendanceCreate], db: Session = Depend
         db.add(att)
         created += 1
     db.commit()
-    return {"created": created, "skipped": skipped}
+    return {"created": created, "updated": updated}
 
 
 @router.put("/{att_id}", response_model=AttendanceResponse)

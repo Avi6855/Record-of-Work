@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
-import { t, formatCurrency } from '@/lib/i18n';
+import { t, formatCurrency, getWorkTypeLabel } from '@/lib/i18n';
 import { Card } from '@/components/ui/Card';
 import Link from 'next/link';
 import { Users } from 'lucide-react';
 
-interface Worker { id: number; name: string; marathiName: string; dailyWage: number; totalAdvance: number; totalPayment: number; outstandingBalance: number; }
+interface Worker { id: number; name: string; marathiName: string; dailyWage: number; totalAdvance: number; totalPayment: number; outstandingBalance: number; workType: string; village: string; }
 
 export default function WorkerAccountsPage() {
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -31,7 +31,7 @@ export default function WorkerAccountsPage() {
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">{w.name}</p>
                       {w.marathiName && <p className="text-sm text-gray-500">{w.marathiName}</p>}
-                      <p className="text-xs text-gray-400">Daily: {formatCurrency(w.dailyWage)}</p>
+                      <p className="text-xs text-gray-400">Daily: {formatCurrency(w.dailyWage)} {w.workType && `• ${getWorkTypeLabel(w.workType)}`}</p>
                     </div>
                   </div>
                   <div className="text-right space-y-1">

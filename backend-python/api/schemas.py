@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from decimal import Decimal
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 
 
@@ -140,18 +140,32 @@ class WorkerResponse(BaseModel):
 
 
 class ProjectCreate(BaseModel):
-    name: str
+    name: Optional[str] = Field(default=None)
     marathiName: Optional[str] = None
     clientId: Optional[int] = None
     clientPhone: Optional[str] = None
     siteAddress: Optional[str] = None
-    startDate: Optional[date] = None
+    startDate: date
     endDate: Optional[date] = None
-    contractAmount: Decimal = Decimal("0")
+    contractAmount: Optional[Decimal] = Field(default=Decimal("0"))
     description: Optional[str] = None
     status: str = "PLANNING"
     notes: Optional[str] = None
     workerIds: list[int] = []
+
+    @field_validator("contractAmount")
+    @classmethod
+    def validate_contract_amount(cls, v):
+        if v is not None and Decimal(str(v)) < 0:
+            raise ValueError("contractAmount must be >= 0")
+        return v
+
+    @field_validator("endDate")
+    @classmethod
+    def validate_end_date(cls, v, info):
+        if v is not None and info.data.get("startDate") is not None and v < info.data["startDate"]:
+            raise ValueError("endDate must be >= startDate")
+        return v
 
 
 class ProjectUpdate(BaseModel):
@@ -168,6 +182,73 @@ class ProjectUpdate(BaseModel):
     notes: Optional[str] = None
     workerIds: Optional[list[int]] = None
 
+    @field_validator("contractAmount")
+    @classmethod
+    def validate_contract_amount_update(cls, v):
+        if v is not None and Decimal(str(v)) < 0:
+            raise ValueError("contractAmount must be >= 0")
+        return v
+
+
+class ProjectAdvancePaymentCreate(BaseModel):
+    amount: Decimal
+    paymentDate: date
+    paymentMethod: str = "CASH"
+    description: Optional[str] = None
+    notes: Optional[str] = None
+    referenceNumber: Optional[str] = None
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v):
+        if Decimal(str(v)) <= 0:
+            raise ValueError("amount must be > 0")
+        return v
+
+    @field_validator("paymentMethod")
+    @classmethod
+    def validate_method(cls, v):
+        allowed = {"CASH", "UPI", "BANK_TRANSFER", "CHEQUE"}
+        if v not in allowed:
+            raise ValueError(f"paymentMethod must be one of {allowed}")
+        return v
+
+
+class ProjectAdvancePaymentUpdate(BaseModel):
+    amount: Optional[Decimal] = None
+    paymentDate: Optional[date] = None
+    paymentMethod: Optional[str] = None
+    description: Optional[str] = None
+    notes: Optional[str] = None
+    referenceNumber: Optional[str] = None
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount_upd(cls, v):
+        if v is not None and Decimal(str(v)) <= 0:
+            raise ValueError("amount must be > 0")
+        return v
+
+
+class ProjectAdvancePaymentResponse(BaseModel):
+    id: int
+    projectId: int
+    organizationId: int
+    amount: Decimal
+    paymentDate: date
+    paymentMethod: str
+    description: Optional[str] = None
+    notes: Optional[str] = None
+    referenceNumber: Optional[str] = None
+    isVoided: bool
+    voidReason: Optional[str] = None
+    createdBy: Optional[int] = None
+    createdAt: datetime
+    updatedAt: datetime
+
+    class Config:
+        from_attributes = True
+
 
 class ProjectResponse(BaseModel):
     id: int
@@ -183,6 +264,9 @@ class ProjectResponse(BaseModel):
     status: str
     notes: Optional[str] = None
     organizationId: int
+    advanceTotal: Decimal = Decimal("0")
+    remainingAmount: Decimal = Decimal("0")
+    advancePayments: list["ProjectAdvancePaymentResponse"] = []
     client: Optional["ClientResponse"] = None
     workers: list["WorkerResponse"] = []
     createdAt: datetime

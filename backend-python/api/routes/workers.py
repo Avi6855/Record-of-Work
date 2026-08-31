@@ -60,7 +60,7 @@ def count_workers(db: Session = Depends(get_db), user=Depends(get_current_user))
 
 @router.get("/{worker_id}/wage")
 def get_worker_wage(worker_id: int, year: int = Query(...), month: int = Query(...), db: Session = Depends(get_db), user=Depends(get_current_user)):
-    w = db.query(Worker).filter(Worker.id == worker_id, Worker.is_deleted == False).first()
+    w = db.query(Worker).filter(Worker.id == worker_id, Worker.is_deleted == False, Worker.organization_id == user.organization_id).first()
     if not w:
         raise HTTPException(status_code=404, detail="Worker not found")
     daily_wage = float(w.daily_wage or 0)
@@ -100,7 +100,7 @@ def get_worker_wage(worker_id: int, year: int = Query(...), month: int = Query(.
 
 @router.get("/{worker_id}", response_model=WorkerResponse)
 def get_worker(worker_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    w = db.query(Worker).filter(Worker.id == worker_id, Worker.is_deleted == False).first()
+    w = db.query(Worker).filter(Worker.id == worker_id, Worker.is_deleted == False, Worker.organization_id == user.organization_id).first()
     if not w:
         raise HTTPException(status_code=404, detail="Worker not found")
     return worker_to_response(w)
@@ -108,11 +108,14 @@ def get_worker(worker_id: int, db: Session = Depends(get_db), user=Depends(get_c
 
 @router.post("", response_model=WorkerResponse, status_code=201)
 def create_worker(data: WorkerCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    wt = data.workType.strip() if data.workType else None
+    if wt == "":
+        wt = None
     worker = Worker(
         organization_id=user.organization_id,
-        name=data.name, marathi_name=data.marathiName,
+        name=data.name.strip(), marathi_name=data.marathiName.strip() if data.marathiName else None,
         phone=data.phone, address=data.address, village=data.village,
-        work_type=data.workType, skill=data.skill,
+        work_type=wt, skill=data.skill,
         daily_wage=data.dailyWage, overtime_rate=data.overtimeRate,
         joining_date=data.joiningDate, photo_url=data.photoUrl,
         emergency_contact_name=data.emergencyContactName,
@@ -127,11 +130,19 @@ def create_worker(data: WorkerCreate, db: Session = Depends(get_db), user=Depend
 
 @router.put("/{worker_id}", response_model=WorkerResponse)
 def update_worker(worker_id: int, data: WorkerUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    w = db.query(Worker).filter(Worker.id == worker_id, Worker.is_deleted == False).first()
+    w = db.query(Worker).filter(Worker.id == worker_id, Worker.is_deleted == False, Worker.organization_id == user.organization_id).first()
     if not w:
         raise HTTPException(status_code=404, detail="Worker not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         snake = "".join(["_" + c.lower() if c.isupper() else c for c in field]).lstrip("_")
+        if snake == "work_type" and isinstance(value, str):
+            value = value.strip()
+            if value == "":
+                value = None
+        if snake == "name" and isinstance(value, str):
+            value = value.strip()
+        if snake == "marathi_name" and isinstance(value, str):
+            value = value.strip() or None
         setattr(w, snake, value)
     db.commit()
     db.refresh(w)
@@ -140,7 +151,7 @@ def update_worker(worker_id: int, data: WorkerUpdate, db: Session = Depends(get_
 
 @router.delete("/{worker_id}")
 def delete_worker(worker_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    w = db.query(Worker).filter(Worker.id == worker_id, Worker.is_deleted == False).first()
+    w = db.query(Worker).filter(Worker.id == worker_id, Worker.is_deleted == False, Worker.organization_id == user.organization_id).first()
     if not w:
         raise HTTPException(status_code=404, detail="Worker not found")
     w.is_deleted = True

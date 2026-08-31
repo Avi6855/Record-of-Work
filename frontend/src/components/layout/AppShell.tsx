@@ -4,7 +4,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useEffect } from 'react';
-import { Toaster } from 'sonner';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading, setLoading } = useAuthStore();
@@ -56,7 +55,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <Toaster position="top-right" richColors closeButton />
       <Sidebar />
       <div className={`transition-all duration-300 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         <Header />

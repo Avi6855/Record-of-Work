@@ -49,7 +49,7 @@ def list_expenses(
 
 @router.get("/{expense_id}", response_model=ExpenseResponse)
 def get_expense(expense_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    e = db.query(Expense).filter(Expense.id == expense_id).first()
+    e = db.query(Expense).filter(Expense.id == expense_id, Expense.organization_id == user.organization_id).first()
     if not e:
         raise HTTPException(status_code=404, detail="Expense not found")
     return exp_to_response(e)
@@ -74,7 +74,7 @@ def create_expense(data: ExpenseCreate, db: Session = Depends(get_db), user=Depe
 
 @router.put("/{expense_id}", response_model=ExpenseResponse)
 def update_expense(expense_id: int, data: ExpenseUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    e = db.query(Expense).filter(Expense.id == expense_id).first()
+    e = db.query(Expense).filter(Expense.id == expense_id, Expense.organization_id == user.organization_id).first()
     if not e:
         raise HTTPException(status_code=404, detail="Expense not found")
     for field, value in data.model_dump(exclude_unset=True).items():
@@ -86,8 +86,8 @@ def update_expense(expense_id: int, data: ExpenseUpdate, db: Session = Depends(g
 
 
 @router.post("/{expense_id}/void")
-def void_expense(expense_id: int, reason: str = "", db: Session = Depends(get_db), user=Depends(get_current_user)):
-    e = db.query(Expense).filter(Expense.id == expense_id).first()
+def void_expense_post(expense_id: int, reason: str = "", db: Session = Depends(get_db), user=Depends(get_current_user)):
+    e = db.query(Expense).filter(Expense.id == expense_id, Expense.organization_id == user.organization_id).first()
     if not e:
         raise HTTPException(status_code=404, detail="Expense not found")
     e.is_voided = True
@@ -97,3 +97,8 @@ def void_expense(expense_id: int, reason: str = "", db: Session = Depends(get_db
     e.voided_at = datetime.now(timezone.utc)
     db.commit()
     return {"message": "Expense voided"}
+
+
+@router.put("/{expense_id}/void")
+def void_expense_put(expense_id: int, reason: str = "", db: Session = Depends(get_db), user=Depends(get_current_user)):
+    return void_expense_post(expense_id, reason, db, user)

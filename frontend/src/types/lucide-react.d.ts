@@ -85,4 +85,7 @@ declare module 'lucide-react' {
   export const Receipt: LucideIcon;
   export const LayoutDashboard: LucideIcon;
   export const Shield: LucideIcon;
+  export const ArrowUpDown: LucideIcon;
+  export const ChevronsUpDown: LucideIcon;
+  export const SlidersHorizontal: LucideIcon;
 }

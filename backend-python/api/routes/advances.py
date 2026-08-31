@@ -67,7 +67,7 @@ def list_advances(
 
 @router.get("/{advance_id}", response_model=AdvanceResponse)
 def get_advance(advance_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    a = db.query(Advance).options(selectinload(Advance.worker)).filter(Advance.id == advance_id).first()
+    a = db.query(Advance).options(selectinload(Advance.worker)).filter(Advance.id == advance_id, Advance.organization_id == user.organization_id).first()
     if not a:
         raise HTTPException(status_code=404, detail="Advance not found")
     return adv_to_response(a)
@@ -90,7 +90,7 @@ def create_advance(data: AdvanceCreate, db: Session = Depends(get_db), user=Depe
 
 @router.put("/{advance_id}", response_model=AdvanceResponse)
 def update_advance(advance_id: int, data: AdvanceUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    a = db.query(Advance).filter(Advance.id == advance_id).first()
+    a = db.query(Advance).filter(Advance.id == advance_id, Advance.organization_id == user.organization_id).first()
     if not a:
         raise HTTPException(status_code=404, detail="Advance not found")
     for field, value in data.model_dump(exclude_unset=True).items():
@@ -102,8 +102,8 @@ def update_advance(advance_id: int, data: AdvanceUpdate, db: Session = Depends(g
 
 
 @router.post("/{advance_id}/void")
-def void_advance(advance_id: int, reason: str = "", db: Session = Depends(get_db), user=Depends(get_current_user)):
-    a = db.query(Advance).filter(Advance.id == advance_id).first()
+def void_advance_post(advance_id: int, reason: str = "", db: Session = Depends(get_db), user=Depends(get_current_user)):
+    a = db.query(Advance).filter(Advance.id == advance_id, Advance.organization_id == user.organization_id).first()
     if not a:
         raise HTTPException(status_code=404, detail="Advance not found")
     a.is_voided = True
@@ -113,3 +113,8 @@ def void_advance(advance_id: int, reason: str = "", db: Session = Depends(get_db
     a.voided_at = datetime.now(timezone.utc)
     db.commit()
     return {"message": "Advance voided"}
+
+
+@router.put("/{advance_id}/void")
+def void_advance_put(advance_id: int, reason: str = "", db: Session = Depends(get_db), user=Depends(get_current_user)):
+    return void_advance_post(advance_id, reason, db, user)
