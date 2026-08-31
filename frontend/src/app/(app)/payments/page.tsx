@@ -54,7 +54,16 @@ export default function PaymentsPage() {
   const { data: workers=[] } = useAllWorkersQuery();
   const { data: projects=[] } = useAllProjectsQuery();
 
-  const raw: Payment[] = useMemo(()=>data?.content||[], [data]);
+  const raw: Payment[] = useMemo(()=>{
+    const list = (data?.content||[]) as any[];
+    return list.map((p:any)=>({
+      ...p,
+      workerName: p.workerName || p.worker?.name || `#${p.workerId}`,
+      workerMarathiName: p.workerMarathiName || p.worker?.marathiName || '',
+      projectName: p.projectName || p.project?.name || '',
+      projectId: p.projectId ?? p.project?.id,
+    })) as Payment[];
+  }, [data]);
 
   const filtered = useMemo(()=>{
     let list=[...raw];

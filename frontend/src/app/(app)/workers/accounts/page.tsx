@@ -13,7 +13,7 @@ export default function WorkerAccountsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/workers', { params: { page: 0, size: 200 } }).then(res => setWorkers(res.data.content)).finally(() => setLoading(false));
+    api.get('/workers', { params: { page: 0, size: 100 } }).then(res => setWorkers(res.data.content || [])).catch(()=>{}).finally(() => setLoading(false));
   }, []);
 
   return (

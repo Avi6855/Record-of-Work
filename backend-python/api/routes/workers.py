@@ -29,7 +29,7 @@ def worker_to_response(w: Worker) -> WorkerResponse:
 @router.get("", response_model=PageResponse)
 def list_workers(
     page: int = Query(0, ge=0),
-    size: int = Query(20, ge=1, le=100),
+    size: int = Query(20, ge=1, le=200),
     search: Optional[str] = None,
     isActive: Optional[bool] = None,
     db: Session = Depends(get_db),

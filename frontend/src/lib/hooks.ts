@@ -41,7 +41,7 @@ export function useAllWorkersQuery(enabled = true) {
   return useQuery({
     queryKey: ['workers', 'all'],
     queryFn: async () => {
-      const res = await api.get<PageResponse<any>>('/workers', { params: { page: 0, size: 200 } });
+      const res = await api.get<PageResponse<any>>('/workers', { params: { page: 0, size: 100 } });
       return res.data.content || [];
     },
     staleTime: 5 * 60 * 1000,
@@ -66,7 +66,7 @@ export function useAllProjectsQuery(enabled = true) {
   return useQuery({
     queryKey: ['projects', 'all'],
     queryFn: async () => {
-      const res = await api.get<PageResponse<any>>('/projects', { params: { page: 0, size: 200 } });
+      const res = await api.get<PageResponse<any>>('/projects', { params: { page: 0, size: 100 } });
       return res.data.content || [];
     },
     staleTime: 5 * 60 * 1000,

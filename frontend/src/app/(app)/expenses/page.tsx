@@ -48,7 +48,14 @@ export default function ExpensesPage(){
   });
 
   const {data:projects=[]}=useAllProjectsQuery();
-  const raw:Expense[]=useMemo(()=>data?.content||[],[data]);
+  const raw:Expense[]=useMemo(()=>{
+    const list=(data?.content||[]) as any[];
+    return list.map((e:any)=>({
+      ...e,
+      projectName: e.projectName || e.project?.name || '',
+      projectId: e.projectId ?? e.project?.id,
+    })) as Expense[];
+  },[data]);
 
   const filtered=useMemo(()=>{
     let list=[...raw];

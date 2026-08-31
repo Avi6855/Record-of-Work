@@ -51,7 +51,16 @@ export default function AdvancesPage() {
   const { data: workers = [] } = useAllWorkersQuery();
   const { data: projects = [] } = useAllProjectsQuery();
 
-  const rawAdvances: Advance[] = useMemo(() => data?.content || [], [data]);
+  const rawAdvances: Advance[] = useMemo(() => {
+    const list = data?.content || [];
+    return list.map((a: any) => ({
+      ...a,
+      workerName: a.workerName || a.worker?.name || `#${a.workerId}`,
+      workerMarathiName: a.workerMarathiName || a.worker?.marathiName || '',
+      projectName: a.projectName || a.project?.name || '',
+      projectId: a.projectId ?? a.project?.id,
+    })) as Advance[];
+  }, [data]);
 
   const filteredAndSorted = useMemo(() => {
     let list = [...rawAdvances];

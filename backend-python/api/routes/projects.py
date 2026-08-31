@@ -88,7 +88,7 @@ def project_to_response(p: Project, advance_payments: Optional[list[ProjectAdvan
 @router.get("", response_model=PageResponse)
 def list_projects(
     page: int = Query(0, ge=0),
-    size: int = Query(20, ge=1, le=100),
+    size: int = Query(20, ge=1, le=200),
     search: Optional[str] = None,
     status_filter: Optional[str] = Query(None, alias="status"),
     db: Session = Depends(get_db),

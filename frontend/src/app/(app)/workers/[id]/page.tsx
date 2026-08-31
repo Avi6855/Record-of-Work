@@ -107,12 +107,13 @@ export default function WorkerDetailPage() {
       });
       return { prevDetail, prevLists };
     },
-    onError: (_err: any, _vars, ctx: any) => {
+    onError: (err: any, _vars, ctx: any) => {
       if (ctx?.prevDetail) queryClient.setQueryData(['workers', id], ctx.prevDetail);
       if (ctx?.prevLists) {
         ctx.prevLists.forEach(([key, val]: any) => queryClient.setQueryData(key, val));
       }
-      toast.error('Update failed / अपडेट अयशस्वी');
+      const detail = err?.response?.data?.detail || err?.response?.data?.message || '';
+      toast.error(detail ? `Update failed: ${detail} / अपडेट अयशस्वी: ${detail}` : 'Update failed / अपडेट अयशस्वी');
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['workers', id], data);
@@ -143,9 +144,10 @@ export default function WorkerDetailPage() {
       });
       return { prevLists };
     },
-    onError: (_err, _vars, ctx: any) => {
+    onError: (err: any, _vars, ctx: any) => {
       if (ctx?.prevLists) ctx.prevLists.forEach(([key, val]: any) => queryClient.setQueryData(key, val));
-      toast.error('Delete failed / हटवणे अयशस्वी');
+      const detail = err?.response?.data?.detail || err?.response?.data?.message || '';
+      toast.error(detail ? `Delete failed: ${detail} / हटवण्यात त्रुटी: ${detail}` : 'Delete failed / हटवण्यात त्रुटी');
     },
     onSuccess: () => {
       toast.success(t('saved'));
