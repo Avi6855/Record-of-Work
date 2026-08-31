@@ -21,7 +21,7 @@ const DashboardSkeletonLite = memo(() => (
 DashboardSkeletonLite.displayName = 'DashboardSkeletonLite';
 
 export default function DashboardPage() {
-  const { data: d, isLoading, isFetching, isError } = useDashboardQuery();
+  const { data: d, isLoading, isFetching, isError, refetch } = useDashboardQuery();
 
   const data = useMemo(() => {
     if (!d) return null;
@@ -55,7 +55,12 @@ export default function DashboardPage() {
 
   if (isLoading && !data) return <DashboardSkeletonLite />;
   if (isError && !data) {
-    return <div className="text-center py-12 text-gray-500">डेटा लोड करण्यात त्रुटी — कृपया रीफ्रेश करा</div>;
+    return (
+      <div className="text-center py-12 space-y-4">
+        <p className="text-gray-500">डेटा लोड करण्यात त्रुटी — कृपया रीफ्रेश करा</p>
+        <button onClick={() => refetch()} className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">पुन्हा प्रयत्न करा / Retry</button>
+      </div>
+    );
   }
   if (!data) return null;
 
