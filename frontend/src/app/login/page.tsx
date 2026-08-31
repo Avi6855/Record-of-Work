@@ -46,7 +46,7 @@ export default function LoginPage() {
       toast.success(locale === 'mr' ? 'लॉगिन यशस्वी!' : 'Login successful!');
       router.push('/dashboard');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || t('invalidCredentials'));
+      toast.error(err.response?.data?.detail || err.response?.data?.message || t('invalidCredentials'));
     } finally {
       setLoading(false);
     }
