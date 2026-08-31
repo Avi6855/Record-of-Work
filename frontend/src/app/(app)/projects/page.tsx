@@ -13,12 +13,14 @@ import Link from 'next/link';
 interface Project { id: number; name: string; contractAmount: number; advanceTotal: number; remainingAmount: number; totalExpense?: number; pendingAmount?: number; status: string; startDate: string; }
 
 export default function ProjectsPage() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
       const res = await api.get('/projects', { params: { page: 0, size: 50 } });
       return res.data.content as Project[];
     },
+    retry: 2,
+    refetchOnMount: 'always',
   });
 
   const projects = data || [];
@@ -29,7 +31,13 @@ export default function ProjectsPage() {
         <div><h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('projects')}</h1><p className="text-sm text-gray-500">{projects.length} {t('allProjects')}</p></div>
         <Link href="/projects/new"><Button icon={<Plus size={18} />}>{t('addProject')}</Button></Link>
       </div>
-      {isLoading ? <TableSkeleton rows={3} cols={5} /> : projects.length === 0 ? (
+      {isFetching && !isLoading && <div className="h-1 w-full bg-gradient-to-r from-indigo-500 to-purple-600 animate-pulse rounded-full" />}
+      {isError && !isLoading ? (
+        <div className="text-center py-12 space-y-4">
+          <p className="text-gray-500">डेटा लोड करण्यात त्रुटी — कृपया रीफ्रेश करा</p>
+          <button onClick={() => refetch()} className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">पुन्हा प्रयत्न करा / Retry</button>
+        </div>
+      ) : isLoading ? <TableSkeleton rows={3} cols={5} /> : projects.length === 0 ? (
         <EmptyState icon={<FolderKanban size={48} />} title={t('noProjects')} actionLabel={t('addProject')} onAction={() => window.location.href = '/projects/new'} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
