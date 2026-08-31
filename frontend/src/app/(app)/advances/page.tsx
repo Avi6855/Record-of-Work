@@ -161,7 +161,22 @@ export default function AdvancesPage() {
       return { prev };
     },
     onError: (_err, _v, ctx:any) => { if(ctx?.prev) queryClient.setQueryData(['advances', page, 50], ctx.prev); toast.error('Update failed'); },
-    onSuccess: () => { toast.success(t('editSuccess')); setShowModal(false); setEditing(null); queryClient.invalidateQueries({ queryKey: ['advances'] }); },
+    onSuccess: (data) => {
+      toast.success(t('editSuccess')); setShowModal(false); setEditing(null);
+      // Update cache with server response to prevent revert to old data
+      const mapped = {
+        ...data,
+        workerName: (data as any).workerName || (data as any).worker?.name || data.workerId,
+        workerMarathiName: (data as any).workerMarathiName || (data as any).worker?.marathiName || '',
+        projectName: (data as any).projectName || (data as any).project?.name || '',
+      } as Advance;
+      queryClient.setQueryData<PageResponse<Advance>>(['advances', page, 50], (old) => {
+        if (!old) return old;
+        return { ...old, content: old.content.map(a => a.id === mapped.id ? { ...a, ...mapped } : a) };
+      });
+      if (selected && selected.id === mapped.id) setSelected(mapped);
+      queryClient.invalidateQueries({ queryKey: ['advances'] });
+    },
   });
 
   const voidMutation = useMutation({
@@ -212,7 +227,7 @@ export default function AdvancesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2"><span className="p-2 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white"><Wallet size={18}/></span>{t('advances')} • उचल {isFetching && <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse inline-block"/>}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2"><span className="p-2 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white"><Wallet size={18}/></span>{t('advances')} {isFetching && <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse inline-block"/>}</h1>
           <p className="text-sm text-gray-500 mt-1">{filteredAndSorted.length} / {rawAdvances.length} records • {t('totalAdvances')}</p>
         </div>
         <Button onClick={openCreate} icon={<Plus size={18}/> } className="bg-gradient-to-r from-amber-500 to-orange-600">{t('addAdvance')}</Button>

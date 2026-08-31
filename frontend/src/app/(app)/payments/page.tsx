@@ -144,7 +144,21 @@ export default function PaymentsPage() {
       return {prev};
     },
     onError:(_e,_v,ctx:any)=>{ if(ctx?.prev) queryClient.setQueryData(['payments', page,50], ctx.prev); toast.error('Update failed'); },
-    onSuccess:()=>{ toast.success(t('editSuccess')); setShowModal(false); setEditing(null); queryClient.invalidateQueries({queryKey:['payments']}); }
+    onSuccess:(data)=>{ 
+      toast.success(t('editSuccess')); setShowModal(false); setEditing(null);
+      const mapped = {
+        ...data,
+        workerName: (data as any).workerName || (data as any).worker?.name || (data as any).workerId,
+        workerMarathiName: (data as any).workerMarathiName || (data as any).worker?.marathiName || '',
+        projectName: (data as any).projectName || (data as any).project?.name || '',
+      } as Payment;
+      queryClient.setQueryData<PageResponse<Payment>>(['payments', page,50], (old)=>{
+        if(!old) return old;
+        return {...old, content: old.content.map(p=>p.id===mapped.id? {...p, ...mapped}:p)};
+      });
+      if(selected && selected.id===mapped.id) setSelected(mapped as any);
+      queryClient.invalidateQueries({queryKey:['payments']}); 
+    }
   });
 
   const voidMutation=useMutation({

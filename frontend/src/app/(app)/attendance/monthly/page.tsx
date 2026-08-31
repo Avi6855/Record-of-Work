@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { t } from '@/lib/i18n';
 import { Card } from '@/components/ui/Card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -17,6 +17,13 @@ export default function MonthlyAttendancePage() {
 
   const { data: workersData, isLoading: workersLoading } = useAllWorkersQuery(true);
   const workers: any[] = (workersData as any) || [];
+
+  // Auto-correct projectId to first project when default 1 doesn't exist (mirrors daily page)
+  useEffect(() => {
+    if (projects.length > 0 && !projects.find((p: any) => p.id === projectId)) {
+      setProjectId(projects[0].id);
+    }
+  }, [projects]);
 
   // Single source of truth: notebook derived from same Attendance table as daily
   const { data: notebookData, isLoading: notebookLoading, isFetching } = useNotebookQuery(projectId, year, month, true);

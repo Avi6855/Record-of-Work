@@ -332,6 +332,8 @@ class PaymentCreate(BaseModel):
 
 
 class PaymentUpdate(BaseModel):
+    workerId: Optional[int] = None
+    projectId: Optional[int] = None
     amount: Optional[Decimal] = None
     paymentDate: Optional[date] = None
     paymentMethod: Optional[str] = None
@@ -375,6 +377,8 @@ class AdvanceCreate(BaseModel):
 
 
 class AdvanceUpdate(BaseModel):
+    workerId: Optional[int] = None
+    projectId: Optional[int] = None
     amount: Optional[Decimal] = None
     advanceDate: Optional[date] = None
     paymentMethod: Optional[str] = None
